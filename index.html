@@ -2,8 +2,13 @@
 <html lang="pt-BR">
 
 <head>
+
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
 
   <title>isabel.sd.ufersa.br</title>
 
@@ -256,13 +261,11 @@ document.getElementById("status");
 const filesList =
 document.getElementById("filesList");
 
-const BUCKET_URL =
-"https://isabel-sd-2026-1.s3.amazonaws.com/";
-
-const apiURL =
+const uploadURL =
 "https://mf3xxdiuqc.execute-api.us-east-1.amazonaws.com/upload";
 
-const arquivos = [];
+const arquivosURL =
+"https://ta1fjy2yp3.execute-api.us-east-1.amazonaws.com/prod/arquivos";
 
 fileInput.addEventListener("change", () => {
 
@@ -305,7 +308,7 @@ async function uploadFile(){
 
         try{
 
-            const response = await fetch(apiURL, {
+            const response = await fetch(uploadURL, {
 
                 method: "POST",
 
@@ -320,7 +323,6 @@ async function uploadFile(){
 
             });
 
-            const data =
             await response.json();
 
             statusDiv.innerHTML =
@@ -329,11 +331,7 @@ async function uploadFile(){
             statusDiv.className =
             "status success";
 
-            arquivos.push(file.name);
-
-            renderFiles();
-
-            console.log(data);
+            loadFiles();
 
         }
 
@@ -353,12 +351,41 @@ async function uploadFile(){
     reader.readAsDataURL(file);
 }
 
-function loadFiles(){
+async function loadFiles(){
 
-    renderFiles();
+    try{
+
+        filesList.innerHTML =
+        `<div class="empty">
+            Carregando arquivos...
+         </div>`;
+
+        const response =
+        await fetch(arquivosURL);
+
+        const data =
+        await response.json();
+
+        const arquivos =
+        JSON.parse(data.body);
+
+        renderFiles(arquivos);
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        filesList.innerHTML =
+        `<div class="empty">
+            Erro ao carregar arquivos.
+         </div>`;
+    }
+
 }
 
-function renderFiles(){
+function renderFiles(arquivos){
 
     filesList.innerHTML = "";
 
@@ -366,16 +393,19 @@ function renderFiles(){
 
         filesList.innerHTML =
         `<div class="empty">
-            Nenhum arquivo carregado ainda.
+            Nenhum arquivo encontrado.
          </div>`;
 
         return;
     }
 
-    arquivos.forEach(nomeArquivo => {
+    arquivos.forEach(arquivo => {
+
+        const nomeArquivo =
+        arquivo.nome;
 
         const fileURL =
-        `${BUCKET_URL}${nomeArquivo}`;
+        arquivo.url;
 
         const div =
         document.createElement("div");
@@ -383,6 +413,7 @@ function renderFiles(){
         div.className = "file-item";
 
         const isImage =
+
             nomeArquivo.endsWith(".png") ||
             nomeArquivo.endsWith(".jpg") ||
             nomeArquivo.endsWith(".jpeg") ||
@@ -395,6 +426,7 @@ function renderFiles(){
 
             ${
                 isImage
+
                 ?
 
                 `<img
@@ -404,7 +436,9 @@ function renderFiles(){
 
                 :
 
-                `<p>Pré-visualização indisponível</p>`
+                `<p>
+                    Pré-visualização indisponível
+                 </p>`
             }
 
             <a
@@ -421,6 +455,8 @@ function renderFiles(){
     });
 
 }
+
+loadFiles();
 
 </script>
 
